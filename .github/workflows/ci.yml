@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: make install
+      - name: Lint
+        run: make lint
+      - name: Test
+        run: make test
+      - name: Upload Pytest Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: pytest-report
+          path: pytest-report.xml

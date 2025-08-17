@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+data/legal/index.pkl
+pytest-report.xml
