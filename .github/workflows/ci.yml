@@ -19,7 +19,7 @@ jobs:
       - name: Lint
         run: make lint
       - name: Test
-        run: make test
+        run: PYTHONPATH=. make test
       - name: Upload Pytest Report
         uses: actions/upload-artifact@v3
         with:
