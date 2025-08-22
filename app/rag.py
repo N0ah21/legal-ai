@@ -6,13 +6,11 @@ from pathlib import Path
 from typing import List
 
 import numpy as np
+import torch
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-try:
-    from sentence_transformers import SentenceTransformer
-except Exception:  # pragma: no cover - handled in testing
-    SentenceTransformer = None  # type: ignore
-
-MODEL_NAME = os.getenv("EMBEDDING_MODEL", "paraphrase-MiniLM-L3-v2")
+TOKENIZER_NAME = os.getenv("EMBEDDING_MODEL", "bert-base-chinese")
+MODEL_NAME = TOKENIZER_NAME
 DATA_DIR = Path(os.getenv("DATA_DIR", "data/legal"))
 INDEX_PATH = Path(os.getenv("INDEX_PATH", DATA_DIR / "index.pkl"))
 
@@ -29,9 +27,22 @@ def get_model():
                 return np.array([[float(len(t))] for t in texts])
 
         return StubModel()
-    if SentenceTransformer is None:
-        raise ImportError("sentence-transformers is required for embeddings")
-    return SentenceTransformer(MODEL_NAME)
+
+    tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
+    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
+
+    class HFModel:
+        def encode(self, texts):
+            if isinstance(texts, str):
+                texts = [texts]
+            inputs = tokenizer(
+                texts, padding=True, truncation=True, return_tensors="pt"
+            )
+            with torch.no_grad():
+                outputs = model(**inputs)
+            return outputs.logits.detach().cpu().numpy()
+
+    return HFModel()
 
 
 class LocalRAG:
